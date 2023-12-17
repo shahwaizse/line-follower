@@ -1,0 +1,82 @@
+// int irSensorPins[5] = {6, 7, 8, 9, 10}; // Array of IR sensor pins
+int irSensorPins[5] = {6, 7, 8, 9, 10};
+int motorPin1 = 2; // INT1 of L298N mini
+int motorPin2 = 3; // INT2 of L298N mini
+int motorPin3 = 4; // INT3 of L298N mini
+int motorPin4 = 5; // INT4 of L298N mini
+
+void setup() {
+  Serial.begin(9600); // Start serial communication at 9600 baud rate
+  
+  for (int i = 0; i < 5; i++) {
+    pinMode(irSensorPins[i], INPUT); // Set IR sensor pins as input
+  }
+  pinMode(motorPin1, OUTPUT); // Set motor pins as output
+  pinMode(motorPin2, OUTPUT);
+  pinMode(motorPin3, OUTPUT);
+  pinMode(motorPin4, OUTPUT);
+}
+
+void loop() {
+  int leftSensorCount = 0;
+  int rightSensorCount = 0;
+  int allSensorsOn = 1; // Assume all sensors are on initially
+
+  for (int i = 0; i < 5; i++) { // Check if all sensors are on
+    allSensorsOn &= digitalRead(irSensorPins[i]);
+  }
+
+  if (allSensorsOn) { // Stop the robot if all sensors are on
+    Serial.println("All sensors on, stopping robot");
+    moveMotor(4); // Stop
+  } else {
+    for (int i = 0; i < 3; i++) { // Count sensors not receiving light on each side
+      leftSensorCount += !digitalRead(irSensorPins[i]);
+    }
+    for (int i = 2; i < 5; i++) {
+      rightSensorCount += !digitalRead(irSensorPins[i]);
+    }
+
+    if (leftSensorCount > rightSensorCount) { // Turn right
+      Serial.println("Turning right");
+      moveMotor(2); // Move forward (reversed direction)
+    } else if (leftSensorCount < rightSensorCount) { // Turn left
+      Serial.println("Turning left");
+      moveMotor(1); // Move forward (reversed direction)
+    } else { // Follow line straight
+      Serial.println("Following line");
+      moveMotor(3); // Move forward
+    }
+  }
+
+  // delay(100); // Delay for 100 milliseconds
+}
+
+void moveMotor(int direction) {
+  switch (direction) {
+    case 1: // Turn right (reversed)
+      digitalWrite(motorPin1, HIGH);
+      digitalWrite(motorPin2, LOW);
+      digitalWrite(motorPin3, HIGH);
+      digitalWrite(motorPin4, LOW);
+      break;
+    case 2: // Turn left (reversed)
+      digitalWrite(motorPin1, LOW);
+      digitalWrite(motorPin2, HIGH);
+      digitalWrite(motorPin3, LOW);
+      digitalWrite(motorPin4, HIGH);
+      break;
+    case 3: // Move forward
+      digitalWrite(motorPin1, HIGH);
+      digitalWrite(motorPin2, LOW);
+      digitalWrite(motorPin3, LOW);
+      digitalWrite(motorPin4, HIGH);
+      break;
+    case 4: // Stop
+      digitalWrite(motorPin1, LOW);
+      digitalWrite(motorPin2, LOW);
+      digitalWrite(motorPin3, LOW);
+      digitalWrite(motorPin4, LOW);
+      break;
+  }
+}
